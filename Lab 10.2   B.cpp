@@ -50,8 +50,10 @@ int ThirdGrade(const Student& s)
     {
     case KompiuterniNauky:
         return s.prohramuvannia;
+
     case Informatyka:
         return s.chyselniMetody;
+
     default:
         return s.pedahohika;
     }
@@ -75,8 +77,8 @@ void Create(Student* p, int N)
         cout << "2 - Matematyka i ekonomika" << endl;
         cout << "3 - Fizyka i informatyka" << endl;
         cout << "4 - Trudove navchannia" << endl;
-
         cout << "Vash vybir: ";
+
         int choice;
         cin >> choice;
 
@@ -147,76 +149,116 @@ int Compare(const Student& a, const Student& b)
     return 0;
 }
 
-void CreateIndex(int* index, int N)
-{
-    for (int i = 0; i < N; i++)
-        index[i] = i;
-}
-
-void SortIndex(const Student* p, int* index, int N)
+void Sort(Student* p, int N)
 {
     for (int i = 0; i < N - 1; i++)
     {
         for (int j = 0; j < N - i - 1; j++)
         {
-            if (Compare(p[index[j]], p[index[j + 1]]) > 0)
+            if (Compare(p[j], p[j + 1]) > 0)
             {
-                int temp = index[j];
-                index[j] = index[j + 1];
-                index[j + 1] = temp;
+                Student temp = p[j];
+                p[j] = p[j + 1];
+                p[j + 1] = temp;
             }
         }
     }
 }
 
-
-void Print(const Student* p, const int* index, int N)
+void Print(const Student* p, int N)
 {
     cout << "\nSPYSOK STUDENTIV\n";
 
-    cout << "+----+-----+----------------+------+------------------------+-----+-----+-----+-----+-----+" << endl;
-    cout << "| No | Ind | Prizvyshche    | Kurs | Spetsialnist           | Fiz | Mat | Pro | ChM | Ped |" << endl;
-    cout << "+----+-----+----------------+------+------------------------+-----+-----+-----+-----+-----+" << endl;
+    cout << "+----+----------------+------+------------------------+-----+-----+-----+-----+-----+--------+" << endl;
+    cout << "| No | Prizvyshche    | Kurs | Spetsialnist           | Fiz | Mat | Pro | ChM | Ped | Ser.   |" << endl;
+    cout << "+----+----------------+------+------------------------+-----+-----+-----+-----+-----+--------+" << endl;
 
     for (int i = 0; i < N; i++)
     {
-        const Student& s = p[index[i]];
-
         cout << "| " << setw(2) << right << i + 1
-            << " | " << setw(3) << right << index[i]
-            << " | " << setw(14) << left << s.prizvyshche
-            << " | " << setw(4) << right << s.kurs
-            << " | " << setw(22) << left << SpecialtyName(s.spetsialnist)
-            << " | " << setw(3) << right << s.fizyka
-            << " | " << setw(3) << right << s.matematyka
+            << " | " << setw(14) << left << p[i].prizvyshche
+            << " | " << setw(4) << right << p[i].kurs
+            << " | " << setw(22) << left << SpecialtyName(p[i].spetsialnist)
+            << " | " << setw(3) << right << p[i].fizyka
+            << " | " << setw(3) << right << p[i].matematyka
             << " | ";
 
-        if (s.spetsialnist == KompiuterniNauky)
-            cout << setw(3) << right << s.prohramuvannia;
+        if (p[i].spetsialnist == KompiuterniNauky)
+            cout << setw(3) << right << p[i].prohramuvannia;
         else
             cout << "   ";
 
         cout << " | ";
 
-        if (s.spetsialnist == Informatyka)
-            cout << setw(3) << right << s.chyselniMetody;
+        if (p[i].spetsialnist == Informatyka)
+            cout << setw(3) << right << p[i].chyselniMetody;
         else
             cout << "   ";
 
         cout << " | ";
 
-        if (s.spetsialnist != KompiuterniNauky &&
-            s.spetsialnist != Informatyka)
-            cout << setw(3) << right << s.pedahohika;
+        if (p[i].spetsialnist != KompiuterniNauky &&
+            p[i].spetsialnist != Informatyka)
+            cout << setw(3) << right << p[i].pedahohika;
         else
             cout << "   ";
 
-        cout << " |" << endl;
+        cout << " | " << fixed << setprecision(2)
+            << setw(6) << right << Average(p[i])
+            << " |" << endl;
     }
 
-    cout << "+----+-----+----------------+------+------------------------+-----+-----+-----+-----+-----+" << endl;
+    cout << "+----+----------------+------+------------------------+-----+-----+-----+-----+-----+--------+" << endl;
 }
 
+int CompareWithKey(const Student& s, const string& surname,
+    Spetsialnist specialty, double average)
+{
+    if (Average(s) < average)
+        return -1;
+
+    if (Average(s) > average)
+        return 1;
+
+    if (SpecialtyName(s.spetsialnist) < SpecialtyName(specialty))
+        return -1;
+
+    if (SpecialtyName(s.spetsialnist) > SpecialtyName(specialty))
+        return 1;
+
+    if (s.prizvyshche < surname)
+        return -1;
+
+    if (s.prizvyshche > surname)
+        return 1;
+
+    return 0;
+}
+
+int BinarySearch(const Student* p, int N, const string& surname,
+    Spetsialnist specialty, double average)
+{
+    int left = 0;
+    int right = N - 1;
+
+    while (left <= right)
+    {
+        int middle = (left + right) / 2;
+
+        int result = CompareWithKey(
+            p[middle], surname, specialty, average);
+
+        if (result == 0)
+            return middle;
+
+        if (result < 0)
+            left = middle + 1;
+        else
+            right = middle - 1;
+    }
+
+    return -1;
+}
 
 #ifndef UNIT_TEST
 int main()
@@ -236,7 +278,6 @@ int main()
     }
 
     Student* p = new Student[N];
-    int* index = new int[N];
 
     Create(p, N);
 
@@ -245,7 +286,8 @@ int main()
     do
     {
         cout << "\nMENU" << endl;
-        cout << "1 - Vporiadkuvaty indeksy" << endl;
+        cout << "1 - Vporiadkuvaty studentiv" << endl;
+        cout << "2 - Znaity studenta" << endl;
         cout << "0 - Vykhid" << endl;
         cout << "Vash vybir: ";
         cin >> menu;
@@ -253,10 +295,44 @@ int main()
         switch (menu)
         {
         case 1:
-            CreateIndex(index, N);
-            SortIndex(p, index, N);
-            Print(p, index, N);
+            Sort(p, N);
+            Print(p, N);
             break;
+
+        case 2:
+        {
+            Sort(p, N);
+
+            string surname;
+            int choice;
+            double average;
+
+            cout << "Vvedit prizvyshche: ";
+            cin >> surname;
+
+            cout << "Vvedit spetsialnist (0-4): ";
+            cin >> choice;
+
+            while (choice < 0 || choice > 4)
+            {
+                cout << "Pomylka. Vvedit vid 0 do 4: ";
+                cin >> choice;
+            }
+
+            cout << "Vvedit serednii bal: ";
+            cin >> average;
+
+            int result = BinarySearch(
+                p, N, surname, (Spetsialnist)choice, average);
+
+            if (result != -1)
+                cout << "Studenta znaideno. Nomеr u spysku: "
+                << result + 1 << endl;
+            else
+                cout << "Studenta ne znaideno." << endl;
+
+            break;
+        }
 
         case 0:
             break;
@@ -268,7 +344,6 @@ int main()
     } while (menu != 0);
 
     delete[] p;
-    delete[] index;
 
     return 0;
 }
